@@ -4,7 +4,6 @@ const { SECRET_KEY } = process.env;
 
 const { User } = require('../models/user');
 const { HttpError, ctrlWrapper } = require('../helpers');
-// const { transcode } = require('buffer');
 
 const register = async (req, res) => {
     const { email, password } = req.body;
@@ -38,14 +37,34 @@ const login = async (req, res) => {
         id: user._id,
     };
 
-    const token = jwt.sign(payload, SECRET_KEY, {expiresIn: '12h'});
+    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '12h' });
+    await User.findByIdAndUpdate(user._id, { token });
 
     res.json({
         token,
     })
-}
+};
+
+const getCurrent = async (req, res) => {
+    const { name, email } = req.user;
+
+    res.json({
+        name, email,
+    })
+};
+
+const logout = async (req, res) => {
+    const { _id } = req.user;
+    await User.findByIdAndUpdate(_id, { token: '' });
+
+    res.json({
+        message: 'logout success'
+    })
+};
 
 module.exports = {
     register: ctrlWrapper(register),
-login: ctrlWrapper(login),
+    login: ctrlWrapper(login),
+    getCurrent: ctrlWrapper(getCurrent),
+    logout: ctrlWrapper(logout),
 }
