@@ -3,20 +3,11 @@ const jwt = require('jsonwebtoken');
 const gravatar = require('gravatar');
 const path = require('path');
 const fs = require('fs/promises');
-// const jimp = require('jimp');
-
-    // Jimp.read("./path/to/image.jpg")
-    //   .then((image) => {
-    //     // Do stuff with the image.
-    //   })
-    //   .catch((err) => {
-    //     // Handle an exception.
-    //   });
 
 const { SECRET_KEY } = process.env;
 
 const { User } = require('../models/user');
-const { HttpError, ctrlWrapper } = require('../helpers');
+const { HttpError, ctrlWrapper, resizeImage } = require("../helpers");
 const avatarsDir = path.join(__dirname, '../', 'public', 'avatars');
 
 const register = async (req, res) => {
@@ -84,8 +75,12 @@ const avatarUpdate = async (req, res) => {
     const { path: tempUpload, originalname } = req.file;
     const fileName = `${_id}_${originalname}`;
     const resultUpload = path.join(avatarsDir, fileName);
+
     await fs.rename(tempUpload, resultUpload);
+    await resizeImage(resultUpload, resultUpload);
+
     const avatarURL = path.join('avatars', fileName);
+
     await User.findByIdAndUpdate(_id, { avatarURL });
     
     res.json({
